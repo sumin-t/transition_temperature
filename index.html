@@ -13,6 +13,8 @@
   --ok:#1E7A4C; --warn:#7D5200; --warn-bg:#FBF0D6; --bad:#B3261E; --bad-bg:#FBE4E2;
   --grid:#BFCBD2; --plot-bg:#FFFFFF; --axis:#13232C;
   --r1:#C9461D; --r2:#1D63A8; --r3:#1E8A5A; --r4:#7A47B8; --r5:#B07A00; --r6:#0E8A8C;
+  --b1:#1D63A8; --b2:#4C9BE0; --b3:#123F73; --b4:#0E8A8C; --b5:#7DB6EE; --b6:#2E4FB0;
+  --d1:#C62828; --d2:#E8743B; --d3:#8E1B3A; --d4:#E0568A; --d5:#A63D00; --d6:#F08A7E;
   --glass:#5E7A88; --liq-water:#8EC9F0; --liq-eth:#E8D28A; --metal:#8A9AA3; --plate:#3B4A53; --plate-top:#5B6C76;
   --solid:#F4F6F7; --solid-ice:#CFEAF7; --melt-acid:#EBCF7A; --table:#C9D3D8;
   --font-body:"IBM Plex Sans KR","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
@@ -26,6 +28,8 @@
     --ok:#5FD39B; --warn:#F0C45A; --warn-bg:#35290F; --bad:#FF8A80; --bad-bg:#3A1C1A;
     --grid:#34505D; --plot-bg:#122027; --axis:#E6EEF2;
     --r1:#FF8F66; --r2:#6DB2F0; --r3:#5FD39B; --r4:#C39BF2; --r5:#E8B84A; --r6:#4FD0D2;
+  --b1:#6DB2F0; --b2:#9CCBF7; --b3:#4A86C8; --b4:#4FD0D2; --b5:#BFDDFA; --b6:#7F95F0;
+  --d1:#FF7A70; --d2:#FFA66B; --d3:#E0607E; --d4:#F78FB5; --d5:#E8905A; --d6:#FFC0B5;
     --glass:#8FB0C0; --liq-water:#3F86B5; --liq-eth:#A48F3E; --metal:#6F838E; --plate:#0C1318; --plate-top:#33444E;
     --solid:#D9DFE2; --solid-ice:#8FC5DD; --melt-acid:#A88F3C; --table:#22333C;
     color-scheme:dark;
@@ -38,6 +42,8 @@
   --ok:#5FD39B; --warn:#F0C45A; --warn-bg:#35290F; --bad:#FF8A80; --bad-bg:#3A1C1A;
   --grid:#34505D; --plot-bg:#122027; --axis:#E6EEF2;
   --r1:#FF8F66; --r2:#6DB2F0; --r3:#5FD39B; --r4:#C39BF2; --r5:#E8B84A; --r6:#4FD0D2;
+  --b1:#6DB2F0; --b2:#9CCBF7; --b3:#4A86C8; --b4:#4FD0D2; --b5:#BFDDFA; --b6:#7F95F0;
+  --d1:#FF7A70; --d2:#FFA66B; --d3:#E0607E; --d4:#F78FB5; --d5:#E8905A; --d6:#FFC0B5;
   --glass:#8FB0C0; --liq-water:#3F86B5; --liq-eth:#A48F3E; --metal:#6F838E; --plate:#0C1318; --plate-top:#33444E;
   --solid:#D9DFE2; --solid-ice:#8FC5DD; --melt-acid:#A88F3C; --table:#22333C;
   color-scheme:dark;
@@ -300,6 +306,9 @@ function fmtClock(min){
 }
 function runName(r){return r.tab==='boil'?LIQ[r.liq].name+' '+r.vol+' mL':SOL[r.sol].name+' '+r.g+' g'}
 /* 지금 선택한 조건과 같은 기록(없으면 null) */
+/* 물·얼음 = 파란 계열, 에탄올·팔미트산 = 붉은 계열 */
+function runFam(r){return (r.liq==='water'||r.sol==='ice')?'b':'d'}
+function runColor(r){return 'var(--'+runFam(r)+(r.ci%6+1)+')'}
 function shownRun(){
   var c=S.cur, s=sel();
   if(!c||c.tab!==S.tab) return null;
@@ -427,10 +436,10 @@ function drawGraph(){
   s+='<text class="g-title" transform="translate(13 '+(G.mt+g.H/2)+') rotate(-90)" text-anchor="middle">온도 (℃)</text>';
   var runs=tabRuns();
   runs.forEach(function(r){
-    s+='<path id="rp'+r.id+'" class="g-run" style="stroke:var(--r'+(r.ci+1)+')" d="'+pathD(r,g)+'"/>';
+    s+='<path id="rp'+r.id+'" class="g-run" style="stroke:'+runColor(r)+'" d="'+pathD(r,g)+'"/>';
   });
   runs.forEach(function(r){
-    s+='<circle id="rd'+r.id+'" r="5.5" cx="'+gx(r.t,g).toFixed(1)+'" cy="'+gy(tempAt(r,r.t),g).toFixed(1)+'" style="fill:var(--r'+(r.ci+1)+');stroke:var(--plot-bg);stroke-width:2"/>';
+    s+='<circle id="rd'+r.id+'" r="5.5" cx="'+gx(r.t,g).toFixed(1)+'" cy="'+gy(tempAt(r,r.t),g).toFixed(1)+'" style="fill:'+runColor(r)+';stroke:var(--plot-bg);stroke-width:2"/>';
   });
   svg.innerHTML=s;
 }
@@ -496,7 +505,7 @@ function renderRuns(){
   if(!rs.length){el.innerHTML='<li class="empty">가열하면 그래프가 자동으로 그려져요.</li>';return}
   el.innerHTML=rs.map(function(r){
     var active=S.heater&&S.cur===r;
-    return '<li><i class="dot" style="background:var(--r'+(r.ci+1)+')"></i>'+esc(runName(r))+
+    return '<li><i class="dot" style="background:'+runColor(r)+'"></i>'+esc(runName(r))+
       '<button type="button" data-del="'+r.id+'" aria-label="'+esc(runName(r))+' 기록 지우기"'+(active?' disabled':'')+'>✕</button></li>';
   }).join('');
 }
@@ -538,7 +547,8 @@ function startHeat(){
   var e=evalSetup(), s=sel();
   if(!e.ok||tabRuns().length>=6) return;
   var used={}, ci=0;
-  tabRuns().forEach(function(r){used[r.ci]=1});
+  var fam=runFam({liq:s.liq,sol:s.sol});
+  tabRuns().forEach(function(r){if(runFam(r)===fam)used[r.ci]=1});
   while(used[ci]) ci++;
   var run={id:++S.uid,tab:S.tab,liq:s.liq,vol:s.vol,sol:s.sol,g:s.g,ci:ci,t:0,dryShown:false};
   run.sim=simulate(run); run.tmax=run.sim.tend/60;
