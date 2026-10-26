@@ -198,10 +198,10 @@ var $=function(s){return document.querySelector(s)};
 var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
 
 /* ===== 물질 데이터 · 물리 상수 (값을 바꾸려면 여기만 수정) ===== */
-var ROOM=20, SOLSTEP=100, SOLMAX=200, SPEED={boil:0.5,melt:0.5}; /* 화면 1초 = 실험 0.5분 */
+var ROOM=20, T0BOIL=40, /* 물·에탄올 처음 온도(℃) */ SOLSTEP=100, SOLMAX=200, SPEED={boil:0.5,melt:0.5}; /* 화면 1초 = 실험 0.5분 */
 var LIQ={ /* bp 끓는점(℃), rho 밀도(g/mL), c 비열(J/g·K), L 증발열(J/g) */
   water:{name:'물', bp:100, rho:1, c:4.18, L:2257, step:10, max:50},
-  ethanol:{name:'에탄올', bp:78.2, rho:0.789, c:2.44, L:855, step:10, max:20}
+  ethanol:{name:'에탄올', bp:78.5, rho:0.789, c:2.44, L:855, step:10, max:20}
 };
 var SOL={ /* mp 녹는점(℃), t0 처음 온도, cs/cl 고체·액체 비열, Lf 융해열(J/g), pc 식을 때 빠져나가는 열량(W), tmin 냉각을 멈추는 온도(℃) */
   ice:{name:'얼음', mp:0, t0:-10, cs:2.1, cl:4.18, Lf:334, pc:300, tmin:-10},   /* 얼음은 0 ℃ 아래까지 식혀야 하므로 더 차가운 곳(얼음-소금물 등)에서 식힌다고 가정 */
@@ -260,7 +260,7 @@ function simulate(r,coolAt){
   var lq=r.tab==='boil'?LIQ[r.liq]:null, so=r.tab==='melt'?SOL[r.sol]:null;
   var bath=!!so||r.liq==='ethanol';
   var pw=so?P.PM:(r.liq==='ethanol'?P.PE:P.PW);
-  var m=lq?r.vol*lq.rho:r.g, m0=m, temp=lq?ROOM:so.t0, phi=0, state=0, tend=tmax, i, j;
+  var m=lq?r.vol*lq.rho:r.g, m0=m, temp=lq?T0BOIL:so.t0, phi=0, state=0, tend=tmax, i, j;
   /* 녹는점 상태: 0 고체, 1 녹는 중, 2 액체, 3 어는 중, 4 다시 고체 */
   for(i=0;i<N;i++){
     T[i]=temp; ph[i]=state; fr[i]=lq?m/m0:phi;
@@ -524,7 +524,7 @@ function renderSafety(){
 }
 function updateSmart(){
   var s=sel(), run=shownRun();
-  var T=run?tempAt(run,run.t):(S.tab==='melt'&&s.sol?SOL[s.sol].t0:ROOM);
+  var T=run?tempAt(run,run.t):(S.tab==='melt'&&s.sol?SOL[s.sol].t0:S.tab==='boil'?T0BOIL:ROOM);
   $('#tNow').textContent=s.sensor?fmtT(T):'--.-';
   $('#timeNow').textContent=fmtClock(run?run.t:0);
 }
@@ -615,7 +615,7 @@ function showDry(r){
   $('#mTitle').textContent=w?'물이 모두 수증기가 되었어요':'에탄올이 모두 기체가 되었어요';
   $('#mBody').textContent=w
     ?'액체가 모두 기체로 변하면 더 이상 끓는 상태가 아니어서, 온도가 100 ℃보다 높아질 수 있어요. 실제 실험에서는 액체가 다 증발하기 전에 가열을 꺼야 안전해요.'
-    :'더 이상 끓지 않으니 온도가 78.2 ℃보다 높아질 수 있어요. 다만 물중탕이라 물의 끓는점인 100 ℃ 가까이까지만 올라가요.';
+    :'더 이상 끓지 않으니 온도가 78.5 ℃보다 높아질 수 있어요. 다만 물중탕이라 물의 끓는점인 100 ℃ 가까이까지만 올라가요.';
   S.paused=true;
   openModal();
 }
